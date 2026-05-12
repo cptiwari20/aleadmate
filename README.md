@@ -1,35 +1,88 @@
 # LeadMate
 
-LeadMate is a browser-first, local-first lead manager for solo operators and small teams who want a clean pipeline without CRM complexity.
+LeadMate is a browser-first lead manager for freelancers, founders, and small teams who want a clean follow-up system without CRM complexity.
 
-## MVP Included
+The project has been migrated from a static MVP into a serious Next.js + TypeScript codebase with Prisma, Neon-ready Postgres configuration, Zod validation, local-first browser storage, and a path toward paid sync.
 
-- LeadMate logo assets in `assets/`
-- GrowthAssist logo asset for the More Tools page
-- SmartDhandha logo asset for the More Tools page
-- Today view for due, overdue, and missing next-action leads
-- Inbox with paste-to-lead parsing
-- Kanban pipeline with drag and drop
-- Lead detail drawer with editable fields, notes, and AI Mate actions
-- Focus Mode for screen sharing
-- Register/login prompt for optional cloud sync at $5/month
-- CSV import/export and JSON export
-- Local IndexedDB persistence
-- Bring-your-own OpenAI-compatible API settings
-- Template fallback when no AI key is configured
+## Stack
 
-## Run
+- Next.js App Router
+- React 19
+- TypeScript
+- Prisma ORM
+- Neon Postgres through `@neondatabase/serverless`
+- Zod validation
+- IndexedDB for local-first browser storage
+- Papa Parse dependency reserved for CSV import/export
+- OpenRouter/OpenAI-compatible AI endpoint scaffold
+- Stripe checkout placeholder for the $5/month sync plan
 
-Open `index.html` in a browser.
+## Project Structure
 
-No install step is required.
+```text
+src/app                 Next.js app routes and API routes
+src/components          LeadMate React UI
+src/lib                 local storage, Prisma, validation, samples, dates
+src/types               shared LeadMate domain types
+prisma/schema.prisma    Neon/Postgres data model
+public/assets           product logos and app assets
+```
 
-Cloud sync is represented as an MVP prototype flow. The free local app works without an account; clicking Sync asks the user to register or log in for the $5/month sync plan.
+## Local Setup
 
-## Product Loop
+Install dependencies:
 
-1. Capture a lead in Inbox.
-2. Move it through Pipeline.
-3. Set a next action and follow-up date.
-4. Open Today to know who needs attention.
-5. Draft or copy the next message.
+```bash
+npm install
+```
+
+Create env:
+
+```bash
+cp .env.example .env
+```
+
+Configure Neon:
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST.neon.tech/DB?sslmode=require"
+DIRECT_DATABASE_URL="postgresql://USER:PASSWORD@HOST.neon.tech/DB?sslmode=require"
+```
+
+Push schema:
+
+```bash
+npm run db:push
+```
+
+Start dev server:
+
+```bash
+npm run dev
+```
+
+## Vercel Config
+
+Use Vercel’s automatic Next.js preset:
+
+- Framework: Next.js
+- Build command: `npm run build`
+- Install command: `npm install`
+- Output directory: leave default
+
+Environment variables needed on Vercel:
+
+- `DATABASE_URL`
+- `DIRECT_DATABASE_URL`
+- `NEXT_PUBLIC_APP_URL`
+- `OPENROUTER_API_KEY`, optional
+- `OPENROUTER_MODEL`, optional
+- `STRIPE_SECRET_KEY`, future billing
+- `STRIPE_WEBHOOK_SECRET`, future billing
+- `NEXT_PUBLIC_STRIPE_PRICE_ID_SYNC_MONTHLY`, future billing
+
+## Product Notes
+
+The current UI still supports local-first usage in the browser. Cloud sync, login, and billing are represented in the UI and backed by a Prisma-ready data model, but production auth and Stripe checkout should be wired next.
+
+The $5/month plan should unlock cloud backup, multi-device sync, and account recovery while keeping the private local mode free.
