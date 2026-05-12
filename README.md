@@ -72,8 +72,8 @@ Use Vercel’s automatic Next.js preset:
 
 Environment variables needed on Vercel:
 
-- `DATABASE_URL`
-- `DIRECT_DATABASE_URL`
+- `DATABASE_URL` or `DATABASE_POSTGRES_PRISMA_URL`
+- `DATABASE_POSTGRES_URL_NON_POOLING` or `DATABASE_URL_UNPOOLED`, optional for local schema pushes
 - `NEXT_PUBLIC_APP_URL`
 - `OPENROUTER_API_KEY`, optional
 - `OPENROUTER_MODEL`, optional
