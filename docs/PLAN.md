@@ -150,12 +150,35 @@ Write original templates, describe and *link to* the source when analysing a rea
 campaign, and require contributors to confirm they own what they submit. Structure
 (timing, sequence, triggers, benchmarks) isn't copyrightable; the prose is.
 
-### Quality collapse
+### Quality collapse — now a launch-day concern
 
-The second this ranks, it attracts affiliate spam and AI slop. Defences from Phase 3:
-human review on a creator's first publish, rate limits, mandatory affiliate
-disclosure, report/downvote, `nofollow` on outbound links until reputation threshold,
-and a visible curation standard.
+**Decision: publishing is open from day one.** Anyone can submit without an invite.
+That's a real bet — it tests whether people actually contribute, which is the
+question that decides whether this is a platform or a blog — but it moves every
+defence from "later" to "before the first public link."
+
+Because there's no invite gate holding the line, these ship *with* Phase 1:
+
+- rate limits per account and per IP on publish
+- `nofollow` on all outbound links until a reputation threshold is crossed
+- mandatory affiliate disclosure, enforced at submit time
+- report / flag on every object, with a visible queue you actually work
+- lightweight review on a creator's **first** publish only — post-hoc for everything
+  after, so contribution stays frictionless
+- near-duplicate and AI-slop detection on submit (embedding similarity against the
+  existing corpus)
+- rights confirmation checkbox on every submission, plus a published takedown path
+
+And the surfaces that keep slop off the front page:
+
+- **default sort is quality, never recency** — a firehose homepage is how open
+  libraries die
+- a visible **Curated** badge and staff-picks rail, so the seeded corpus anchors the
+  standard newcomers write toward
+- objects with no Result attached rank below objects that have one
+
+The seeded corpus matters *more* under open publishing, not less: it's the only thing
+setting the quality bar for the first hundred contributors.
 
 ---
 
@@ -205,29 +228,38 @@ every screenshot anyone posts. Everything else can be plain.
 
 Dates assume a start of **Mon 10 Aug 2026**. Each phase is independently shippable.
 
+Open publishing pulls auth and moderation forward, so Phase 1 is bigger than the
+read-only version would have been — one launch instead of two.
+
 **Phase 0 — Foundation (week 1, Aug 10–16)**
-Scaffold, design system, data model, auth, seed pipeline, deploy skeleton.
-*Exit:* an empty but deployed app, one seeded playbook renders end to end.
+Scaffold, design system, data model, **auth**, seed pipeline, deploy skeleton.
+*Exit:* an empty but deployed app; one seeded playbook renders end to end.
 
-**Phase 1 — The public library (weeks 2–3, Aug 17–30)**
+**Phase 1 — Library + open publishing (weeks 2–4, Aug 17–Sep 6)**
 Read experience, browse/facets, search, all public routes, OG cards, funnel diagram
-and flow timeline, copy-to-clipboard on every play. No accounts.
-*Exit:* **launchable on its own.** Shareable from day one, before any login exists.
+and flow timeline, copy-to-clipboard on every play. Structured publish flow, rights
+confirmation, rate limits, report queue, first-publish review, quality-default
+ranking, Curated badge.
+*Exit:* **the public launch.** A stranger can read without an account and publish
+with one.
 
-**Phase 2 — Close the loop (week 4, Aug 31–Sep 6)**
-Auth, fork, save, collections, creator profiles, fork counts.
-*Exit:* fork → signup → workspace works; instrument the conversion rate.
+**Phase 2 — Close the loops (week 5, Sep 7–13)**
+Fork, save, collections, creator profiles, fork counts, Results capture,
+leaderboards, weekly digest.
+*Exit:* fork → signup works and is instrumented; contributors have a profile worth
+promoting.
 
-**Phase 3 — Open it up (weeks 5–6, Sep 7–20)**
-Contributor publishing, submission + review queue, Results capture, leaderboards,
-weekly digest, moderation and anti-spam.
-*Exit:* someone who isn't you can publish something good.
+**Phase 3 — Trust at scale (week 6, Sep 14–20)**
+Reputation thresholds, `dofollow` promotion, dedupe and slop detection tuned against
+real submissions, moderation tooling, curation surfaces.
+*Exit:* moderation load per new contributor is flat or falling.
 
-**Phase 4 — The paid layer (weeks 7+)**
-Workspace/pipeline (legacy code returns), AI adaptation, embeds, free-tool wedge,
-billing.
+**Phase 4 — The paid layer (weeks 7+, Sep 21 onward)**
+Workspace/pipeline (legacy CRM code returns as the "run it" layer), AI adaptation,
+embeds, free-tool wedge, billing.
 
-Content seeding runs in parallel from week 1 and must be done before Phase 1 ships.
+Content seeding runs in parallel from week 1 and must be done before Phase 1 ships —
+under open publishing the seed corpus *is* the quality bar, so it can't slip.
 
 ---
 
@@ -250,9 +282,21 @@ features.
 
 ---
 
-## 10. Open decisions
+## 10. Decisions
 
-1. **Does the CRM/pipeline layer come back at all**, or does aLeadMate become purely
-   a content and playbook platform with no execution surface?
-2. **Curated-first vs. open-from-day-one** publishing.
+**Decided — 9 Aug 2026**
+
+1. **Library first; the CRM returns in Phase 4** as the paid "run it" layer you
+   graduate into after forking. Phase 1 ships without it.
+2. **Open publishing from day one** — no invite gate. Consequences: auth moves into
+   Phase 0, and the full anti-spam and curation stack ships with Phase 1 rather than
+   later (§6). The bet is that open contribution is the thing worth testing early;
+   the cost is that moderation is a launch requirement, not a follow-up.
+
+**Still open**
+
 3. Whether to keep the `aleadmate` name and the existing brand assets from legacy.
+4. Where results-verification stops — screenshots only, or connected data sources
+   (ESP/CRM read-only OAuth) for a real Verified tier. Affects Phase 2 scope.
+5. Whether the seed corpus is authored solo or with 2–3 paid freelance writers, which
+   is the main lever on whether Phase 1's date holds.
