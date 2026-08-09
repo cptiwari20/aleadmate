@@ -1,0 +1,365 @@
+// aLeadMate data model.
+//
+// Two things drive the shape here:
+//   1. Publishing is open from day one, so moderation state and reputation are
+//      first-class columns, not a bolt-on.
+//   2. Every object keeps a fork lineage, because "1,240 people forked this" is
+//      both a ranking signal and the main share hook.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Prisma 7 moves connection URLs out of the schema — see prisma.config.ts for
+// the migration/introspection URL, and src/lib/prisma.ts for the runtime adapter.
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Auth (better-auth core schema)
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+
+  profile   Profile?
+  playbooks Playbook[]
+  forks     Fork[]
+  results   Result[]
+  reports   Report[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ---------------------------------------------------------------------------
+// Creators
+// ---------------------------------------------------------------------------
+
+model Profile {
+  id     String @id @default(cuid())
+  userId String @unique
+  handle String @unique
+  bio    String?
+  url    String?
+
+  /// Earned by publishing things people actually fork. Gates dofollow links.
+  reputation Int     @default(0)
+  /// Outbound links stay nofollow until reputation clears the threshold.
+  dofollow   Boolean @default(false)
+  /// Set after a creator's first publish is reviewed; later posts skip the queue.
+  reviewed   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Content
+// ---------------------------------------------------------------------------
+
+enum PublishStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
+  REMOVED
+}
+
+enum ProofTier {
+  UNVERIFIED
+  COMMUNITY
+  VERIFIED
+}
+
+enum ResultUnit {
+  PERCENT
+  COUNT
+  CURRENCY
+  RATIO
+  DAYS
+}
+
+enum PlayKind {
+  EMAIL
+  DM
+  CALL_SCRIPT
+  AD
+  LANDING_COPY
+  OBJECTION
+  POST
+}
+
+model Playbook {
+  id      String @id @default(cuid())
+  slug    String @unique
+  title   String
+  summary String
+
+  /// Facet slugs are owned by src/lib/taxonomy.ts, validated in app code.
+  channel    String
+  icps       String[] @default([])
+  motion     String
+  difficulty String
+  stack      String[] @default([])
+
+  timeToFirstLead String?
+  costToRun       String?
+
+  bodyMarkdown String
+  bodyHtml     String
+
+  authorId String
+  status   PublishStatus @default(DRAFT)
+  /// Staff-seeded content. Anchors the bar newcomers write toward.
+  curated  Boolean       @default(false)
+
+  rightsConfirmed     Boolean @default(false)
+  affiliateDisclosure String?
+
+  /// Fork lineage. Makes "N descendants" queryable in one hop.
+  parentId String?
+
+  forkCount Int @default(0)
+  viewCount Int @default(0)
+  copyCount Int @default(0)
+
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  author   User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent   Playbook?  @relation("PlaybookLineage", fields: [parentId], references: [id], onDelete: SetNull)
+  children Playbook[] @relation("PlaybookLineage")
+
+  funnel  Funnel?
+  flows   Flow[]
+  results Result[]
+  forks   Fork[]
+  reports Report[]
+
+  @@index([status, publishedAt])
+  @@index([channel, status])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+model Funnel {
+  id         String @id @default(cuid())
+  playbookId String @unique
+  slug       String
+  name       String
+
+  playbook Playbook      @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+  stages   FunnelStage[]
+}
+
+model FunnelStage {
+  id             String  @id @default(cuid())
+  funnelId       String
+  key            String
+  label          String
+  description    String?
+  benchmarkLabel String?
+  benchmarkValue String?
+  /// Optional link from a stage to the flow that runs it.
+  flowId         String?
+  position       Int
+
+  funnel Funnel @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  flow   Flow?  @relation(fields: [flowId], references: [id], onDelete: SetNull)
+
+  @@unique([funnelId, key])
+  @@index([funnelId, position])
+}
+
+model Flow {
+  id            String   @id @default(cuid())
+  playbookId    String
+  slug          String
+  name          String
+  goal          String
+  exitCriteria  String[] @default([])
+  position      Int
+
+  playbook Playbook      @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+  steps    FlowStep[]
+  stages   FunnelStage[]
+  results  Result[]
+
+  @@unique([playbookId, slug])
+  @@index([playbookId, position])
+}
+
+model FlowStep {
+  id        String  @id @default(cuid())
+  flowId    String
+  /// Days after the flow starts.
+  day       Int
+  condition String?
+  channel   String?
+  position  Int
+  playId    String  @unique
+
+  flow Flow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  play Play @relation(fields: [playId], references: [id], onDelete: Cascade)
+
+  @@index([flowId, position])
+}
+
+model Play {
+  id        String   @id @default(cuid())
+  slug      String
+  kind      PlayKind
+  name      String
+  hook      String?
+  body      String
+  rationale String?
+  /// [{ token, description, example }]
+  variables Json     @default("[]")
+
+  copyCount Int @default(0)
+
+  step FlowStep?
+}
+
+/// A dated, sized outcome. A result without a period is not a result.
+model Result {
+  id         String  @id @default(cuid())
+  playbookId String
+  flowId     String?
+
+  label      String
+  value      Float
+  unit       ResultUnit
+  currency   String?
+  sampleSize Int?
+  /// YYYY-MM.
+  period     String
+
+  proofTier ProofTier @default(UNVERIFIED)
+  proofUrl  String?
+  note      String?
+
+  /// Set when a forker reports their own numbers back — the community tier.
+  reportedById String?
+
+  createdAt DateTime @default(now())
+
+  playbook   Playbook @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+  flow       Flow?    @relation(fields: [flowId], references: [id], onDelete: SetNull)
+  reportedBy User?    @relation(fields: [reportedById], references: [id], onDelete: SetNull)
+
+  @@index([playbookId])
+  @@index([period])
+}
+
+model Fork {
+  id         String   @id @default(cuid())
+  userId     String
+  playbookId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playbook Playbook @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, playbookId])
+  @@index([playbookId])
+}
+
+// ---------------------------------------------------------------------------
+// Moderation
+// ---------------------------------------------------------------------------
+
+enum ReportReason {
+  PLAGIARISM
+  FABRICATED_RESULTS
+  UNDISCLOSED_AFFILIATE
+  SPAM
+  OFF_TOPIC
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  UPHELD
+  DISMISSED
+}
+
+model Report {
+  id         String       @id @default(cuid())
+  playbookId String
+  reporterId String?
+  reason     ReportReason
+  detail     String?
+  status     ReportStatus @default(OPEN)
+  createdAt  DateTime     @default(now())
+  resolvedAt DateTime?
+
+  playbook Playbook @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+  reporter User?    @relation(fields: [reporterId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([playbookId])
+}

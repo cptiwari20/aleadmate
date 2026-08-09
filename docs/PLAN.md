@@ -231,9 +231,11 @@ Dates assume a start of **Mon 10 Aug 2026**. Each phase is independently shippab
 Open publishing pulls auth and moderation forward, so Phase 1 is bigger than the
 read-only version would have been — one launch instead of two.
 
-**Phase 0 — Foundation (week 1, Aug 10–16)**
+**Phase 0 — Foundation (week 1, Aug 10–16) — ✅ done**
 Scaffold, design system, data model, **auth**, seed pipeline, deploy skeleton.
-*Exit:* an empty but deployed app; one seeded playbook renders end to end.
+*Exit met:* build green at 31 static pages; one seeded playbook renders end to end
+with funnel diagram, flow timeline, copy-to-clipboard, proof-tiered results, and a
+generated OG card. Public pages render with no database configured.
 
 **Phase 1 — Library + open publishing (weeks 2–4, Aug 17–Sep 6)**
 Read experience, browse/facets, search, all public routes, OG cards, funnel diagram
