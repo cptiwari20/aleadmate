@@ -115,7 +115,19 @@ export async function completeWaitlist(
   }
 
   try {
-    const stored = await saveQualification(token, parsed.data);
+    // A thrown storage error means the same thing as a missing row: this lead
+    // has nowhere durable to live, so fall through to Slack rather than
+    // failing the signup.
+    let stored = null as Awaited<ReturnType<typeof saveQualification>>;
+    try {
+      stored = await saveQualification(token, parsed.data);
+    } catch (error) {
+      console.error(
+        `waitlist: qualification storage failed in "${storeMode()}" mode, ` +
+          "falling back to Slack",
+        error,
+      );
+    }
 
     // No stored row — no database, a failed write, or an unknown token. Slack
     // is then the only place this lead can land, so the contact details come
