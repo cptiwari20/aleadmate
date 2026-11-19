@@ -35,6 +35,13 @@ type ButtonStyleProps = {
   size?: keyof typeof buttonSizes;
 };
 
+/**
+ * Anchor attributes minus `href`, which comes from LinkProps instead. Without
+ * this the component only typechecks after a build has generated the typed-route
+ * declarations, because the un-augmented LinkProps carries no children/className.
+ */
+type AnchorProps = Omit<ComponentPropsWithoutRef<"a">, "href">;
+
 export function buttonClass({ variant = "primary", size = "md" }: ButtonStyleProps = {}) {
   return cn(buttonBase, buttonVariants[variant], buttonSizes[size]);
 }
@@ -58,7 +65,7 @@ export function ButtonLink<RouteType>({
   size,
   className,
   ...props
-}: ButtonStyleProps & LinkProps<RouteType>) {
+}: ButtonStyleProps & AnchorProps & LinkProps<RouteType>) {
   return <Link className={cn(buttonClass({ variant, size }), className)} {...props} />;
 }
 

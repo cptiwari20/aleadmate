@@ -13,3 +13,6 @@ next-env.d.ts
 tsconfig.tsbuildinfo
 
 src/generated
+
+# Local waitlist capture used only when DATABASE_URL is unset in dev
+.waitlist-local.jsonl

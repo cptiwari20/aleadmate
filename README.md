@@ -1,17 +1,19 @@
 # aLeadMate
 
-**The open library of lead-gen playbooks that actually worked.**
+**An AI SDR that finds your leads and runs the outreach.**
 
-Free to read. Free to copy. No login wall. Every guide, flow, and funnel is a live,
-forkable object — not a PDF.
+`/` is the early-access waitlist landing page. The open playbook library lives on
+under `/library` and is unchanged.
 
 ---
 
 ## Status
 
-**Phase 0 complete.** The app builds, deploys, and renders a seeded playbook end to
-end. Auth and the data model are in place ahead of Phase 1, because publishing is
-open from day one and there is no read-only window to hide behind.
+**Waitlist landing page live** at `/`, capturing signups in two steps.
+
+**Phase 0 of the playbook library complete** — builds, deploys, and renders a seeded
+playbook end to end. Auth and the data model are in place ahead of Phase 1, because
+publishing is open from day one and there is no read-only window to hide behind.
 
 - **Plan:** [`docs/PLAN.md`](docs/PLAN.md)
 - **Previous codebase:** the local-first LeadMate CRM lives on the `legacy` branch
@@ -29,7 +31,26 @@ npm run dev
 
 The public library renders from version-controlled markdown in `content/playbooks/`
 and needs **no database**. A `.env` is only required once you touch accounts, forks,
-or submissions.
+submissions, or waitlist signups.
+
+## Waitlist
+
+The landing page at `/` captures signups in two steps:
+
+1. **Contact** — name, email, phone. Saved on its own, so someone who abandons the
+   second step is still a captured lead rather than a lost one.
+2. **Qualification** — lead types, location, business, budget per lead, and leads per
+   month. Enriches the row created by step 1 via an unguessable token; the database
+   id is never exposed to the browser.
+
+Protections: a Zod schema on both steps, an off-screen honeypot, a per-instance rate
+limit, and an upsert on email so a repeat signup updates rather than erroring.
+
+> **Before launch:** set `DATABASE_URL`. Without it, signups fall back to a gitignored
+> `.waitlist-local.jsonl` in development, and in production the action **fails loudly
+> rather than faking success** — a landing page that pretends to capture is worse than
+> one that is down. The rate limit is in-memory and per-instance; move it to a shared
+> store (Upstash) before you send real traffic.
 
 ## Content model
 
@@ -99,7 +120,7 @@ Everything is optional in Phase 0 except what you actually use.
 
 | Variable | Needed for |
 |---|---|
-| `DATABASE_URL` | Accounts, forks, submissions |
+| `DATABASE_URL` | Waitlist signups, accounts, forks, submissions |
 | `DIRECT_DATABASE_URL` | `db push` and migrations |
 | `BETTER_AUTH_SECRET` | Auth (`openssl rand -base64 32`) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google sign-in |

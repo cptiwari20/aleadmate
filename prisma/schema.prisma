@@ -363,3 +363,43 @@ model Report {
   @@index([status, createdAt])
   @@index([playbookId])
 }
+
+// ---------------------------------------------------------------------------
+// Waitlist
+// ---------------------------------------------------------------------------
+
+enum WaitlistStage {
+  /// Step 1 saved: we have a reachable human.
+  CONTACT
+  /// Step 2 saved: we also know what they want and what they will pay.
+  QUALIFIED
+}
+
+model WaitlistSignup {
+  id    String @id @default(cuid())
+  /// Unguessable handle returned to the browser so step 2 can only enrich the
+  /// row it created — the cuid id is never exposed to the client.
+  token String @unique
+  email String @unique
+
+  name  String
+  phone String
+
+  leadTypes     String[] @default([])
+  leadTypeOther String?
+  location      String?
+  business      String?
+  budgetPerLead String?
+  leadsPerMonth String?
+
+  stage       WaitlistStage @default(CONTACT)
+  completedAt DateTime?
+
+  referrer  String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([stage, createdAt])
+}
