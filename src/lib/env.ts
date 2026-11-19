@@ -21,5 +21,16 @@ export function requireEnv(key: string): string {
   return value;
 }
 
-export const databaseUrl = () => optionalEnv("DATABASE_URL");
+/**
+ * Values still carrying the .env.example placeholders count as unset.
+ * Copying the example and filling in only some keys is the normal first move,
+ * and a placeholder URL fails at connect time with a far more confusing error
+ * than simply having no database configured.
+ */
+const PLACEHOLDER = /USER:PASSWORD|HOST\.neon\.tech|^your[-_]/i;
+
+export const databaseUrl = () => {
+  const url = optionalEnv("DATABASE_URL");
+  return url && !PLACEHOLDER.test(url) ? url : undefined;
+};
 export const isDatabaseConfigured = () => Boolean(databaseUrl());

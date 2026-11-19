@@ -1,12 +1,14 @@
 "use server";
 
 import { headers } from "next/headers";
+import { after } from "next/server";
 import {
   contactStepSchema,
   qualifyStepSchema,
   toFieldErrors,
   type ActionResult,
 } from "@/lib/waitlist/schema";
+import { notifySlack } from "@/lib/waitlist/notify";
 import { saveContact, saveQualification } from "@/lib/waitlist/store";
 
 /**
@@ -104,7 +106,14 @@ export async function completeWaitlist(
   }
 
   try {
-    await saveQualification(token, parsed.data);
+    const signup = await saveQualification(token, parsed.data);
+
+    // after() runs once the response is sent, so a slow Slack call never
+    // shows up as a slow form for the person who just signed up.
+    if (signup) {
+      after(() => notifySlack(signup));
+    }
+
     return { ok: true, token };
   } catch (error) {
     console.error("waitlist: failed to save qualification", error);

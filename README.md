@@ -52,6 +52,36 @@ limit, and an upsert on email so a repeat signup updates rather than erroring.
 > one that is down. The rate limit is in-memory and per-instance; move it to a shared
 > store (Upstash) before you send real traffic.
 
+### Slack notifications
+
+A completed signup is posted to a Slack workflow trigger as:
+
+```json
+{
+  "data": "New Lead came",
+  "Name": "...", "Email": "...", "Phone": "...",
+  "Location": "...", "LeadType": "...", "otherInfos": "..."
+}
+```
+
+`LeadType` is the selected labels joined (plus any free-text "other"), and
+`otherInfos` carries business, budget per lead, and monthly volume. Slack workflow
+variables must be strings, so nothing is sent as an array or a number.
+
+Set `SLACK_WAITLIST_WEBHOOK_URL` to enable it. Three things worth knowing:
+
+- **It fires on step 2 only.** A visitor who completes step 1 and abandons is still
+  saved, but does not notify. Move the call into `startWaitlist` if you would rather
+  hear about every contact immediately and accept a second message per lead.
+- **It never blocks the signup.** The post runs in `after()`, so a slow or failing
+  Slack call cannot slow down or break the form. Failures are logged, not surfaced.
+- **The destination is pinned to `hooks.slack.com` over HTTPS.** The payload contains
+  names, emails and phone numbers; a mistyped env var must not become a PII leak to
+  an arbitrary host.
+
+> The webhook URL is a credential — anyone holding it can post into your workspace.
+> It belongs in `.env` and in your host's environment settings, never in the repo.
+
 ### Reading the signups
 
 `/admin/waitlist` lists every signup with totals, step-2 completion rate, and a CSV
@@ -154,6 +184,7 @@ Everything is optional in Phase 0 except what you actually use.
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google sign-in |
 | `RESEND_API_KEY` | Magic-link delivery — logged to the console without it |
 | `ADMIN_EMAILS` | Access to `/admin/waitlist` |
+| `SLACK_WAITLIST_WEBHOOK_URL` | Posting completed signups to Slack |
 | `NEXT_PUBLIC_APP_URL` | Canonical URLs and OG images |
 
 See [`docs/PLAN.md`](docs/PLAN.md) for the phases, viral loops, and open decisions.

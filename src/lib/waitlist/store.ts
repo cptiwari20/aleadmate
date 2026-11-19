@@ -91,8 +91,21 @@ export async function saveContact(
   return row.token;
 }
 
-/** Step 2. Enriches the row created by step 1; silently no-ops on a bad token. */
-export async function saveQualification(token: string, input: QualifyStep): Promise<boolean> {
+/** The contact fields a notification needs, returned by a successful step 2. */
+export type CompletedSignup = {
+  name: string;
+  email: string;
+  phone: string;
+} & QualifyStep;
+
+/**
+ * Step 2. Enriches the row created by step 1 and returns the merged record so
+ * the caller can notify without a second read. Returns null on an unknown token.
+ */
+export async function saveQualification(
+  token: string,
+  input: QualifyStep,
+): Promise<CompletedSignup | null> {
   const details = {
     leadTypes: input.leadTypes,
     leadTypeOther: input.leadTypeOther || null,
@@ -105,19 +118,25 @@ export async function saveQualification(token: string, input: QualifyStep): Prom
   if (usingLocalFile()) {
     const rows = await readLocal();
     const row = rows.find((r) => r.token === token);
-    if (!row) return false;
+    if (!row) return null;
     Object.assign(row, input, {
       stage: "QUALIFIED" as const,
       completedAt: new Date().toISOString(),
     });
     await writeLocal(rows);
-    return true;
+    return { name: row.name, email: row.email, phone: row.phone, ...input };
   }
 
-  const updated = await getPrisma().waitlistSignup.updateMany({
-    where: { token },
-    data: { ...details, stage: "QUALIFIED", completedAt: new Date() },
-  });
-
-  return updated.count > 0;
+  try {
+    const row = await getPrisma().waitlistSignup.update({
+      where: { token },
+      data: { ...details, stage: "QUALIFIED", completedAt: new Date() },
+      select: { name: true, email: true, phone: true },
+    });
+    return { ...row, ...input };
+  } catch (error) {
+    // P2025 — no row with that token. Not an error worth surfacing to the user.
+    if ((error as { code?: string }).code === "P2025") return null;
+    throw error;
+  }
 }
