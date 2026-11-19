@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition, type ReactNode } from "react";
 import { completeWaitlist, startWaitlist } from "@/app/(marketing)/actions";
+import { MateAvatar } from "@/components/brand/mate";
 import { Button } from "@/components/ui/primitives";
 import {
   BUDGET_PER_LEAD,
@@ -134,24 +135,13 @@ export function WaitlistForm() {
 
   if (step === "done") {
     return (
-      <div ref={headingRef} className="rounded-2xl border border-border bg-surface p-6 sm:p-8">
-        <div className="flex size-11 items-center justify-center rounded-full bg-accent-soft">
-          <svg
-            viewBox="0 0 20 20"
-            className="size-5 text-accent-text"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
-          >
-            <path d="M4 10.5l4 4 8-8.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
+      <div ref={headingRef} className="ring-gradient rounded-2xl border border-border bg-surface/90 p-6 shadow-2xl backdrop-blur sm:p-8">
+        <MateAvatar size={56} />
         <h3 className="mt-4 text-xl font-semibold text-fg">You&rsquo;re on the list.</h3>
         <p className="mt-2 text-sm leading-relaxed text-muted">
-          We&rsquo;ll email you when your spot opens. Early access goes out in batches so
-          every account gets set up properly, and we&rsquo;ll ask about your ideal customer
-          before we switch the agent on.
+          Mate has your brief. We&rsquo;ll email you when your spot opens &mdash; early
+          access goes out in batches so every account gets set up properly, and Mate will
+          have your first list ready before you log in.
         </p>
         <p className="mt-4 text-xs text-faint">
           No credit card, no charge until you&rsquo;ve seen leads you actually want.
@@ -161,7 +151,7 @@ export function WaitlistForm() {
   }
 
   return (
-    <div ref={headingRef} className="rounded-2xl border border-border bg-surface p-6 sm:p-8">
+    <div ref={headingRef} className="ring-gradient rounded-2xl border border-border bg-surface/90 p-6 shadow-2xl backdrop-blur sm:p-8">
       <Progress step={step} />
 
       {step === 1 ? (

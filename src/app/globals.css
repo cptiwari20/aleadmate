@@ -23,11 +23,17 @@
   --muted: oklch(0.47 0.011 260);
   --faint: oklch(0.62 0.01 260);
 
-  --accent: oklch(0.58 0.15 155);
-  --accent-hover: oklch(0.52 0.15 155);
+  /* Sampled from the logo mark: #15634F. */
+  --brand: oklch(0.42 0.079 166);
+  --accent: oklch(0.42 0.079 166);
+  --accent-hover: oklch(0.36 0.075 166);
   --accent-fg: oklch(1 0 0);
-  --accent-soft: oklch(0.95 0.04 155);
-  --accent-text: oklch(0.45 0.13 155);
+  --accent-soft: oklch(0.95 0.035 166);
+  --accent-text: oklch(0.40 0.078 166);
+
+  --glow-a: oklch(0.72 0.14 166 / 0.22);
+  --glow-b: oklch(0.65 0.13 200 / 0.16);
+  --grid-line: oklch(0.45 0.02 180 / 0.07);
 
   /* Proof tiers — deliberately distinct, never interchangeable. */
   --tier-verified: oklch(0.55 0.16 250);
@@ -48,21 +54,26 @@
 .dark {
   color-scheme: dark;
 
-  --bg: oklch(0.17 0.006 260);
-  --surface: oklch(0.212 0.007 260);
-  --surface-2: oklch(0.253 0.008 260);
-  --border: oklch(0.305 0.009 260);
-  --border-strong: oklch(0.40 0.011 260);
+  --bg: oklch(0.145 0.008 170);
+  --surface: oklch(0.186 0.009 170);
+  --surface-2: oklch(0.228 0.011 170);
+  --border: oklch(0.278 0.012 170);
+  --border-strong: oklch(0.38 0.014 170);
 
-  --fg: oklch(0.965 0.003 260);
-  --muted: oklch(0.735 0.011 260);
-  --faint: oklch(0.60 0.011 260);
+  --fg: oklch(0.97 0.004 170);
+  --muted: oklch(0.745 0.012 170);
+  --faint: oklch(0.60 0.012 170);
 
-  --accent: oklch(0.72 0.16 155);
-  --accent-hover: oklch(0.78 0.16 155);
-  --accent-fg: oklch(0.17 0.02 155);
-  --accent-soft: oklch(0.30 0.055 155);
-  --accent-text: oklch(0.80 0.14 155);
+  --brand: oklch(0.42 0.079 166);
+  --accent: oklch(0.78 0.165 163);
+  --accent-hover: oklch(0.85 0.16 163);
+  --accent-fg: oklch(0.16 0.03 166);
+  --accent-soft: oklch(0.28 0.06 166);
+  --accent-text: oklch(0.86 0.15 163);
+
+  --glow-a: oklch(0.72 0.17 163 / 0.30);
+  --glow-b: oklch(0.58 0.16 215 / 0.22);
+  --grid-line: oklch(0.85 0.02 170 / 0.055);
 
   --tier-verified: oklch(0.72 0.14 250);
   --tier-verified-soft: oklch(0.30 0.055 250);
@@ -85,6 +96,7 @@
   --color-muted: var(--muted);
   --color-faint: var(--faint);
 
+  --color-brand: var(--brand);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-fg: var(--accent-fg);
@@ -216,5 +228,209 @@
   .prose-am th {
     background: var(--surface-2);
     font-weight: 600;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Motion and surface effects for the marketing page.
+
+   Everything here is CSS-only — no animation library — and every
+   animation is gated behind prefers-reduced-motion so the page stays
+   usable for people who ask for less movement.
+   --------------------------------------------------------------- */
+
+@layer utilities {
+  /* Aurora glow behind the hero. Two offset radial fields, no image. */
+  .glow-field {
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 70%;
+    pointer-events: none;
+    background:
+      radial-gradient(42% 55% at 22% 25%, var(--glow-a) 0%, transparent 70%),
+      radial-gradient(38% 50% at 78% 10%, var(--glow-b) 0%, transparent 72%);
+    filter: blur(28px);
+  }
+
+  /* Faint technical grid. Masked so it fades out rather than ending. */
+  .grid-field {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(120% 90% at 50% 0%, #000 35%, transparent 85%);
+  }
+
+  .text-gradient {
+    background: linear-gradient(100deg, var(--fg) 20%, var(--accent) 95%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Hairline gradient edge — reads as "lit" without a heavy border. */
+  .ring-gradient {
+    position: relative;
+  }
+  .ring-gradient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(140deg, var(--accent) 0%, transparent 42%, transparent 60%, var(--accent) 140%);
+    opacity: 0.45;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .mask-fade-x {
+    mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  }
+}
+
+@keyframes am-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes am-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes am-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 var(--glow-a);
+  }
+  70% {
+    box-shadow: 0 0 0 9px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes am-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(260%);
+  }
+}
+
+@keyframes am-caret {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  95% {
+    opacity: 0;
+  }
+}
+
+@keyframes am-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .anim-fade-up {
+    animation: am-fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .anim-marquee {
+    animation: am-marquee 38s linear infinite;
+  }
+  .anim-pulse-ring {
+    animation: am-pulse-ring 2.4s ease-out infinite;
+  }
+  .anim-sweep {
+    animation: am-sweep 2.6s ease-in-out infinite;
+  }
+  .anim-caret {
+    animation: am-caret 1.1s step-end infinite;
+  }
+  .anim-float {
+    animation: am-float 5s ease-in-out infinite;
+  }
+  .group:hover .anim-marquee,
+  .anim-marquee:hover {
+    animation-play-state: paused;
+  }
+}
+
+/* Reduced motion: show the end state, never the journey. */
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-up,
+  .anim-marquee,
+  .anim-pulse-ring,
+  .anim-sweep,
+  .anim-caret,
+  .anim-float {
+    animation: none !important;
+  }
+}
+
+/* Mate's blink. Eyelids rather than opacity, so it reads as a character. */
+@keyframes am-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95%,
+  97% {
+    transform: scaleY(0.08);
+  }
+}
+
+@keyframes am-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .anim-blink {
+    animation: am-blink 5.5s ease-in-out infinite;
+    transform-origin: center;
+  }
+  .anim-orbit {
+    animation: am-orbit 9s linear infinite;
+    transform-origin: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-blink,
+  .anim-orbit {
+    animation: none !important;
   }
 }

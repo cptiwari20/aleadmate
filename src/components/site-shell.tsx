@@ -1,26 +1,16 @@
 import Link from "next/link";
+import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { site } from "@/lib/site";
 import { CHANNELS } from "@/lib/taxonomy";
-
-function Wordmark() {
-  return (
-    <Link href="/" className="group flex items-center gap-2">
-      <span className="flex size-7 items-center justify-center rounded-md bg-accent font-mono text-sm font-bold text-accent-fg">
-        a
-      </span>
-      <span className="text-[15px] font-semibold tracking-tight text-fg">aLeadMate</span>
-    </Link>
-  );
-}
 
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-bg/85 backdrop-blur">
       <Container className="flex h-14 items-center justify-between gap-4">
         <div className="flex items-center gap-6">
-          <Wordmark />
+          <Logo />
           <nav className="hidden items-center gap-5 text-sm text-muted md:flex">
             <Link href="/library" className="transition-colors hover:text-fg">
               Library
@@ -47,7 +37,7 @@ export function SiteFooter() {
     <footer className="mt-20 border-t border-border bg-surface">
       <Container className="grid gap-8 py-10 sm:grid-cols-3">
         <div>
-          <Wordmark />
+          <Logo />
           <p className="mt-3 max-w-xs text-sm text-muted">{site.tagline}</p>
           <p className="mt-3 text-xs text-faint">
             Free to read, free to copy, no login wall. Permanently.
