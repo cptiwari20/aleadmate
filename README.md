@@ -82,6 +82,23 @@ Set `SLACK_WAITLIST_WEBHOOK_URL` to enable it. Three things worth knowing:
 > The webhook URL is a credential — anyone holding it can post into your workspace.
 > It belongs in `.env` and in your host's environment settings, never in the repo.
 
+### Running before Neon exists
+
+In production with no `DATABASE_URL`, Slack becomes the system of record so the form
+still works. In that mode the Slack post is **awaited**, and a signup is only
+reported as successful once Slack confirms receipt — a lead that reached nowhere is
+never shown a success screen.
+
+Two limits while in this mode, both of which disappear the moment `DATABASE_URL` is
+set:
+
+- A visitor who completes step 1 and abandons is **not** captured. There is nowhere
+  to put them.
+- `/admin/waitlist` stays empty, and there is no dedup or CSV export. Slack is the
+  only copy.
+
+Treat it as a bridge to launch, not a destination.
+
 ### Reading the signups
 
 `/admin/waitlist` lists every signup with totals, step-2 completion rate, and a CSV
@@ -94,6 +111,19 @@ download. It needs two things:
 
 The CSV export quotes every field and neutralises leading `=`, `+`, `-` and `@`, so a
 signup cannot smuggle a spreadsheet formula into whoever opens the export.
+
+## Deploying
+
+The repo carries a `vercel.json` pinning the Next.js preset, install and build
+commands. Set these in the Vercel project's environment variables before pointing a
+domain at it:
+
+| Variable | Why it matters live |
+|---|---|
+| `SLACK_WAITLIST_WEBHOOK_URL` | **Required.** Without it, and without a database, the form cannot accept signups at all. |
+| `NEXT_PUBLIC_APP_URL` | Canonical URLs and OG images. Set to the production origin. |
+| `DATABASE_URL` / `DIRECT_DATABASE_URL` | Durable storage, admin view, CSV export. |
+| `BETTER_AUTH_SECRET`, `ADMIN_EMAILS` | Needed only to sign in to `/admin/waitlist`. |
 
 ## Connecting Neon
 

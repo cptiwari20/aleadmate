@@ -32,14 +32,22 @@ function newToken() {
   return randomBytes(24).toString("base64url");
 }
 
+/**
+ * Where a signup can actually be kept.
+ *
+ * "none" is the pre-Neon production bridge: there is no database yet, so Slack
+ * is the system of record. In that mode the caller MUST confirm Slack accepted
+ * the lead before reporting success — see completeWaitlist.
+ */
+export type StoreMode = "database" | "local-file" | "none";
+
+export function storeMode(): StoreMode {
+  if (isDatabaseConfigured()) return "database";
+  return process.env.NODE_ENV === "production" ? "none" : "local-file";
+}
+
 function usingLocalFile() {
-  if (isDatabaseConfigured()) return false;
-  if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "DATABASE_URL is not set — refusing to accept waitlist signups that cannot be stored.",
-    );
-  }
-  return true;
+  return storeMode() === "local-file";
 }
 
 async function readLocal(): Promise<LocalRow[]> {
@@ -65,6 +73,10 @@ export async function saveContact(
   meta: SignupMeta = {},
 ): Promise<string> {
   const token = newToken();
+
+  // No durable store yet: hand back a token so the flow continues, and let
+  // step 2 carry the contact details through to Slack.
+  if (storeMode() === "none") return token;
 
   if (usingLocalFile()) {
     const rows = await readLocal();
@@ -114,6 +126,9 @@ export async function saveQualification(
     budgetPerLead: input.budgetPerLead,
     leadsPerMonth: input.leadsPerMonth,
   };
+
+  // No durable store: nothing to enrich. The caller falls back to Slack.
+  if (storeMode() === "none") return null;
 
   if (usingLocalFile()) {
     const rows = await readLocal();

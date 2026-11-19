@@ -78,6 +78,12 @@ function FormError({ message }: { message?: string }) {
 export function WaitlistForm() {
   const [step, setStep] = useState<1 | 2 | "done">(1);
   const [token, setToken] = useState("");
+  /**
+   * Carried into step 2 so the lead can still reach Slack before a database
+   * exists. When one is configured the server uses the stored row and ignores
+   * these entirely.
+   */
+  const [contact, setContact] = useState({ name: "", email: "", phone: "" });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [message, setMessage] = useState<string>();
   const [pending, startTransition] = useTransition();
@@ -110,6 +116,11 @@ export function WaitlistForm() {
       const result = await startWaitlist(formData);
       if (result.ok) {
         setToken(result.token);
+        setContact({
+          name: String(formData.get("name") ?? ""),
+          email: String(formData.get("email") ?? ""),
+          phone: String(formData.get("phone") ?? ""),
+        });
         advance(2);
       } else {
         setErrors(result.errors);
@@ -221,6 +232,9 @@ export function WaitlistForm() {
         </form>
       ) : (
         <form key="step-2" onSubmit={onSubmitStepTwo} noValidate className="space-y-5">
+          <input type="hidden" name="contactName" value={contact.name} />
+          <input type="hidden" name="contactEmail" value={contact.email} />
+          <input type="hidden" name="contactPhone" value={contact.phone} />
           <Field label="What kind of leads do you want?" error={errors.leadTypes}>
             <div className="flex flex-wrap gap-2">
               {LEAD_TYPES.map((type) => {

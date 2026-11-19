@@ -83,9 +83,10 @@ function buildPayload(input: NotifyInput): Record<string, string> {
   };
 }
 
-export async function notifySlack(input: NotifyInput): Promise<void> {
+/** Returns true only when Slack confirmed receipt. */
+export async function notifySlack(input: NotifyInput): Promise<boolean> {
   const webhook = resolveWebhook();
-  if (!webhook) return;
+  if (!webhook) return false;
 
   try {
     const response = await fetch(webhook, {
@@ -100,9 +101,14 @@ export async function notifySlack(input: NotifyInput): Promise<void> {
       console.error(
         `waitlist: Slack rejected the notification (${response.status}) ${detail.slice(0, 300)}`,
       );
+      return false;
     }
+
+    return true;
   } catch (error) {
-    // Swallowed on purpose: the signup is already saved.
+    // Never rethrown: when a database holds the lead, Slack is only a courtesy.
+    // The caller decides whether a false return matters.
     console.error("waitlist: Slack notification failed", error);
+    return false;
   }
 }

@@ -9,7 +9,7 @@ import {
   type ActionResult,
 } from "@/lib/waitlist/schema";
 import { notifySlack } from "@/lib/waitlist/notify";
-import { saveContact, saveQualification } from "@/lib/waitlist/store";
+import { saveContact, saveQualification, storeMode } from "@/lib/waitlist/store";
 
 /**
  * In-memory, per-instance throttle. It is not a substitute for Upstash on a
@@ -106,12 +106,45 @@ export async function completeWaitlist(
   }
 
   try {
-    const signup = await saveQualification(token, parsed.data);
+    const stored = await saveQualification(token, parsed.data);
+
+    // With no database yet, Slack is the only place this lead can land, so the
+    // contact details come back from the browser and delivery must be
+    // confirmed before we tell anyone they joined.
+    if (!stored && storeMode() === "none") {
+      const contact = contactStepSchema.safeParse({
+        name: formData.get("contactName"),
+        email: formData.get("contactEmail"),
+        phone: formData.get("contactPhone"),
+      });
+
+      if (!contact.success) {
+        return { ok: false, errors: {}, message: "Something went wrong. Please try again." };
+      }
+
+      const delivered = await notifySlack({
+        name: contact.data.name,
+        email: contact.data.email,
+        phone: contact.data.phone,
+        ...parsed.data,
+      });
+
+      // Never report success for a lead that reached nowhere.
+      if (!delivered) {
+        return {
+          ok: false,
+          errors: {},
+          message: "We could not save your details just then. Please try again.",
+        };
+      }
+
+      return { ok: true, token };
+    }
 
     // after() runs once the response is sent, so a slow Slack call never
     // shows up as a slow form for the person who just signed up.
-    if (signup) {
-      after(() => notifySlack(signup));
+    if (stored) {
+      after(() => notifySlack(stored));
     }
 
     return { ok: true, token };
