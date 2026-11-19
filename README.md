@@ -52,6 +52,34 @@ limit, and an upsert on email so a repeat signup updates rather than erroring.
 > one that is down. The rate limit is in-memory and per-instance; move it to a shared
 > store (Upstash) before you send real traffic.
 
+### Reading the signups
+
+`/admin/waitlist` lists every signup with totals, step-2 completion rate, and a CSV
+download. It needs two things:
+
+1. `ADMIN_EMAILS` — a comma-separated allowlist. It is an env var rather than a
+   database role because only someone who can deploy should be able to grant access.
+2. A signed-in session. Sign in at `/signin` with a magic link; without
+   `RESEND_API_KEY` the link is printed to the dev server console.
+
+The CSV export quotes every field and neutralises leading `=`, `+`, `-` and `@`, so a
+signup cannot smuggle a spreadsheet formula into whoever opens the export.
+
+## Connecting Neon
+
+1. Create a project at [neon.tech](https://neon.tech) and copy both connection
+   strings — the **pooled** one and the **direct** one.
+2. `cp .env.example .env`, then set `DATABASE_URL` (pooled) and
+   `DIRECT_DATABASE_URL` (direct).
+3. Create the tables and verify:
+
+```bash
+npm run db:push && npm run db:check
+```
+
+`db:push` is schema-only and safe to re-run. On Vercel, set the same variables in
+the project's environment settings.
+
 ## Content model
 
 Five primitives; everything on the site is one of them:
@@ -125,6 +153,7 @@ Everything is optional in Phase 0 except what you actually use.
 | `BETTER_AUTH_SECRET` | Auth (`openssl rand -base64 32`) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google sign-in |
 | `RESEND_API_KEY` | Magic-link delivery — logged to the console without it |
+| `ADMIN_EMAILS` | Access to `/admin/waitlist` |
 | `NEXT_PUBLIC_APP_URL` | Canonical URLs and OG images |
 
 See [`docs/PLAN.md`](docs/PLAN.md) for the phases, viral loops, and open decisions.
