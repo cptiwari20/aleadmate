@@ -9,7 +9,7 @@ import {
   type ActionResult,
 } from "@/lib/waitlist/schema";
 import { notifySlack } from "@/lib/waitlist/notify";
-import { saveContact, saveQualification, storeMode } from "@/lib/waitlist/store";
+import { newToken, saveContact, saveQualification, storeMode } from "@/lib/waitlist/store";
 
 /**
  * In-memory, per-instance throttle. It is not a substitute for Upstash on a
@@ -40,6 +40,12 @@ async function requestMeta() {
   };
 }
 
+/**
+ * Returned when the honeypot fires, so the bot sees success while nothing is
+ * stored or sent. Distinct from a degraded token, which is a real signup.
+ */
+const HONEYPOT_TOKEN = "__hp__";
+
 /** Step 1 — name, email, phone. Saved immediately so an abandon still counts. */
 export async function startWaitlist(formData: FormData): Promise<ActionResult> {
   const parsed = contactStepSchema.safeParse({
@@ -55,7 +61,7 @@ export async function startWaitlist(formData: FormData): Promise<ActionResult> {
 
   // Honeypot tripped. Report success so the bot has nothing to tune against.
   if (parsed.data.companyWebsite) {
-    return { ok: true, token: "" };
+    return { ok: true, token: HONEYPOT_TOKEN };
   }
 
   const { ip, referrer, userAgent } = await requestMeta();
@@ -70,12 +76,15 @@ export async function startWaitlist(formData: FormData): Promise<ActionResult> {
     );
     return { ok: true, token };
   } catch (error) {
-    console.error("waitlist: failed to save contact", error);
-    return {
-      ok: false,
-      errors: {},
-      message: "Something went wrong on our side. Please try again.",
-    };
+    // Storage being broken must not cost us the lead. Carry on with an
+    // unstored token: step 2 finds no row and delivers to Slack instead,
+    // where delivery is confirmed before success is reported.
+    console.error(
+      `waitlist: contact storage failed in "${storeMode()}" mode, ` +
+        "degrading to Slack-only for this signup",
+      error,
+    );
+    return { ok: true, token: newToken() };
   }
 }
 
@@ -97,8 +106,8 @@ export async function completeWaitlist(
     return { ok: false, errors: toFieldErrors(parsed.error) };
   }
 
-  // Empty token means step 1 was a honeypot hit; accept and store nothing.
-  if (!token) return { ok: true, token: "" };
+  // Honeypot hit at step 1: accept, store nothing, send nothing.
+  if (!token || token === HONEYPOT_TOKEN) return { ok: true, token: HONEYPOT_TOKEN };
 
   const { ip } = await requestMeta();
   if (rateLimited(ip)) {
@@ -108,10 +117,11 @@ export async function completeWaitlist(
   try {
     const stored = await saveQualification(token, parsed.data);
 
-    // With no database yet, Slack is the only place this lead can land, so the
-    // contact details come back from the browser and delivery must be
-    // confirmed before we tell anyone they joined.
-    if (!stored && storeMode() === "none") {
+    // No stored row — no database, a failed write, or an unknown token. Slack
+    // is then the only place this lead can land, so the contact details come
+    // back from the browser and delivery must be confirmed before we tell
+    // anyone they joined.
+    if (!stored) {
       const contact = contactStepSchema.safeParse({
         name: formData.get("contactName"),
         email: formData.get("contactEmail"),
@@ -119,6 +129,7 @@ export async function completeWaitlist(
       });
 
       if (!contact.success) {
+        console.error("waitlist: no stored row and no usable contact fallback");
         return { ok: false, errors: {}, message: "Something went wrong. Please try again." };
       }
 
@@ -131,6 +142,10 @@ export async function completeWaitlist(
 
       // Never report success for a lead that reached nowhere.
       if (!delivered) {
+        console.error(
+          "waitlist: lead could not be stored OR delivered to Slack — " +
+            "check DATABASE_URL and SLACK_WAITLIST_WEBHOOK_URL",
+        );
         return {
           ok: false,
           errors: {},

@@ -28,7 +28,7 @@ type LocalRow = {
 } & Partial<QualifyStep> &
   SignupMeta;
 
-function newToken() {
+export function newToken() {
   return randomBytes(24).toString("base64url");
 }
 
