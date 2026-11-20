@@ -63,6 +63,8 @@ export const qualifyStepSchema = z
       .min(1, "Pick at least one")
       .max(LEAD_TYPES.length),
     leadTypeOther: z.string().trim().max(120).optional().default(""),
+    /** Captured at the hero before the form; blank when skipped. */
+    website: z.string().trim().max(200).optional().default(""),
     location: z.string().trim().min(2, "Where should we look?").max(120),
     business: z.string().trim().min(2, "Tell us about your business").max(160),
     budgetPerLead: z.enum(values(BUDGET_PER_LEAD), {

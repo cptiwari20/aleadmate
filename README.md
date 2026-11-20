@@ -35,7 +35,18 @@ submissions, or waitlist signups.
 
 ## Waitlist
 
-The landing page at `/` captures signups in two steps:
+The landing page opens with a **website address**, not a form. Mate fetches the
+visitor's own site and reads back its real title, description and site name — nothing
+is inferred or invented, because the full research only runs once they are invited.
+That read is what earns the signup, and the website is carried into the record.
+
+Fetching a visitor-supplied URL from our own server is an SSRF risk, so
+`src/lib/analyze/url.ts` resolves the hostname and rejects loopback, private,
+link-local (including cloud metadata at `169.254.169.254`), carrier-NAT and reserved
+ranges — and every redirect hop is re-checked, not just the first URL. Reads are
+capped at 7s and 512KB, HTML only, with a generic user agent.
+
+Signups are then captured in two steps:
 
 1. **Contact** — name, email, phone. Saved on its own, so someone who abandons the
    second step is still a captured lead rather than a lost one.

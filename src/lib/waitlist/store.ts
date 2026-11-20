@@ -119,6 +119,7 @@ export async function saveQualification(
   input: QualifyStep,
 ): Promise<CompletedSignup | null> {
   const details = {
+    website: input.website || null,
     leadTypes: input.leadTypes,
     leadTypeOther: input.leadTypeOther || null,
     location: input.location,

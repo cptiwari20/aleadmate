@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { MateAvatar } from "@/components/brand/mate";
 import { AgentConsole } from "@/components/waitlist/agent-console";
+import { WebsiteProvider } from "@/components/waitlist/website-context";
+import { WebsiteStart } from "@/components/waitlist/website-start";
 import { WaitlistForm } from "@/components/waitlist/waitlist-form";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { marketing } from "@/lib/site";
@@ -125,7 +127,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export default function WaitlistLandingPage() {
   return (
-    <>
+    <WebsiteProvider>
       {/* ---------------- Hero ---------------- */}
       <section className="relative overflow-hidden border-b border-border">
         <div className="glow-field" aria-hidden="true" />
@@ -133,37 +135,30 @@ export default function WaitlistLandingPage() {
 
         <Container className="relative py-16 sm:py-24">
           <div className="grid items-center gap-14 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-            <div className="anim-fade-up">
+            <div className="anim-fade-up min-w-0">
               <span className="inline-flex items-center gap-2.5 rounded-full border border-border bg-surface py-1 pl-1 pr-4 text-xs font-medium text-muted">
                 <MateAvatar size={26} />
                 Meet <span className="text-fg">Mate</span> &mdash; early access open
               </span>
 
               <h1 className="mt-6 text-[2.6rem] font-semibold leading-[1.04] tracking-[-0.03em] text-fg sm:text-[3.4rem] xl:text-6xl">
-                Your next 500 leads,
+                Start with your website.
                 <br />
-                <span className="text-gradient">found and emailed</span>
-                <br />
-                before Monday.
+                <span className="text-gradient">Mate finds the rest.</span>
               </h1>
 
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted">
-                Mate is your AI SDR. Describe your ideal customer in one sentence and
-                Mate finds them, verifies every contact, writes the outreach and runs the
-                follow-ups. The only thing that reaches your desk is a reply.
+                Type your web address. Mate reads what you sell, works out who buys it,
+                finds those exact people with verified emails, and writes the first touch.
+                See what it picks up before you join.
               </p>
 
-              <div className="mt-9 flex flex-wrap items-center gap-3">
-                <ButtonLink href="#waitlist" size="lg" className="shadow-lg shadow-accent/20">
-                  Get early access
-                </ButtonLink>
-                <ButtonLink href="#how-it-works" variant="outline" size="lg">
-                  See how it works
-                </ButtonLink>
+              <div className="mt-9">
+                <WebsiteStart />
               </div>
 
               <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-faint">
-                {["40 seconds to join", "No credit card", "No charge until you see leads"].map(
+                {["Takes about 20 seconds", "No account needed", "Invitations go out in batches"].map(
                   (item) => (
                     <span key={item} className="flex items-center gap-1.5">
                       <svg
@@ -183,7 +178,7 @@ export default function WaitlistLandingPage() {
               </div>
             </div>
 
-            <div className="anim-float">
+            <div className="anim-float min-w-0">
               <AgentConsole />
             </div>
           </div>
@@ -215,7 +210,7 @@ export default function WaitlistLandingPage() {
 
         <Container className="relative py-20">
           <div className="grid items-center gap-14 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
-            <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+            <div className="flex min-w-0 flex-col items-center text-center lg:items-start lg:text-left">
               <div className="anim-float">
                 <MateAvatar size={132} busy />
               </div>
@@ -247,7 +242,7 @@ export default function WaitlistLandingPage() {
             </div>
 
             {/* Mate's shift */}
-            <div className="ring-gradient relative rounded-2xl border border-border bg-surface/80 p-6 backdrop-blur sm:p-8">
+            <div className="ring-gradient relative min-w-0 rounded-2xl border border-border bg-surface/80 p-6 backdrop-blur sm:p-8">
               <div className="flex items-center gap-2.5">
                 <span className="size-1.5 animate-pulse rounded-full bg-accent" />
                 <h3 className="text-sm font-semibold text-fg">A day on Mate&rsquo;s shift</h3>
@@ -422,6 +417,6 @@ export default function WaitlistLandingPage() {
           </div>
         </Container>
       </section>
-    </>
+    </WebsiteProvider>
   );
 }

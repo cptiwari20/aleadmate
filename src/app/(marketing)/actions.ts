@@ -8,6 +8,7 @@ import {
   toFieldErrors,
   type ActionResult,
 } from "@/lib/waitlist/schema";
+import { readSite, type SiteRead } from "@/lib/analyze/site";
 import { notifySlack } from "@/lib/waitlist/notify";
 import { newToken, saveContact, saveQualification, storeMode } from "@/lib/waitlist/store";
 
@@ -38,6 +39,31 @@ async function requestMeta() {
     referrer: h.get("referer") ?? undefined,
     userAgent: h.get("user-agent") ?? undefined,
   };
+}
+
+export type AnalyzeResult =
+  | { ok: true; site: SiteRead }
+  | { ok: false; message: string };
+
+/**
+ * Reads the visitor's own website so the first thing they see is their real
+ * site read back to them. Nothing here is inferred or invented — the full
+ * research runs once they are invited.
+ */
+export async function analyzeWebsite(input: string): Promise<AnalyzeResult> {
+  if (!input || input.trim().length < 3) {
+    return { ok: false, message: "Enter your website address." };
+  }
+
+  const { ip } = await requestMeta();
+  if (rateLimited(`analyze:${ip}`)) {
+    return { ok: false, message: "Too many lookups. Try again in a minute." };
+  }
+
+  const result = await readSite(input);
+  if (!result.ok) return { ok: false, message: result.reason };
+
+  return { ok: true, site: result.site };
 }
 
 /**
@@ -96,6 +122,7 @@ export async function completeWaitlist(
   const parsed = qualifyStepSchema.safeParse({
     leadTypes: formData.getAll("leadTypes"),
     leadTypeOther: formData.get("leadTypeOther") ?? "",
+    website: formData.get("website") ?? "",
     location: formData.get("location"),
     business: formData.get("business"),
     budgetPerLead: formData.get("budgetPerLead"),

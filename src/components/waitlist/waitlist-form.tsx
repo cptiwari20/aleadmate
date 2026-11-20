@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition, type ReactNode } from "react";
 import { completeWaitlist, startWaitlist } from "@/app/(marketing)/actions";
 import { MateAvatar } from "@/components/brand/mate";
+import { useWebsite } from "@/components/waitlist/website-context";
 import { Button } from "@/components/ui/primitives";
 import {
   BUDGET_PER_LEAD,
@@ -84,6 +85,7 @@ export function WaitlistForm() {
    * these entirely.
    */
   const [contact, setContact] = useState({ name: "", email: "", phone: "" });
+  const { site } = useWebsite();
   const [errors, setErrors] = useState<FieldErrors>({});
   const [message, setMessage] = useState<string>();
   const [pending, startTransition] = useTransition();
@@ -232,6 +234,7 @@ export function WaitlistForm() {
         </form>
       ) : (
         <form key="step-2" onSubmit={onSubmitStepTwo} noValidate className="space-y-5">
+          <input type="hidden" name="website" value={site?.url ?? ""} />
           <input type="hidden" name="contactName" value={contact.name} />
           <input type="hidden" name="contactEmail" value={contact.email} />
           <input type="hidden" name="contactPhone" value={contact.phone} />

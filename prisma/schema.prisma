@@ -385,6 +385,7 @@ model WaitlistSignup {
   name  String
   phone String
 
+  website       String?
   leadTypes     String[] @default([])
   leadTypeOther String?
   location      String?

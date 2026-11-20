@@ -62,6 +62,7 @@ function buildPayload(input: NotifyInput): Record<string, string> {
   if (input.leadTypeOther) leadTypes.push(input.leadTypeOther);
 
   const otherInfos = [
+    input.website ? `Website: ${input.website}` : null,
     input.business ? `Business: ${input.business}` : null,
     input.budgetPerLead
       ? `Budget per lead: ${labelOf(BUDGET_PER_LEAD, input.budgetPerLead)}`

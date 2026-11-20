@@ -110,7 +110,7 @@ export function AgentConsole() {
   const { scenario, text, done } = useRotatingQuery();
 
   return (
-    <div className="ring-gradient relative overflow-hidden rounded-2xl border border-border bg-surface/80 shadow-2xl backdrop-blur">
+    <div className="ring-gradient relative min-w-0 overflow-hidden rounded-2xl border border-border bg-surface/80 shadow-2xl backdrop-blur">
       {/* Search bar */}
       <div className="relative flex items-center gap-2.5 border-b border-border bg-surface-2/60 px-4 py-3">
         <svg
@@ -140,7 +140,7 @@ export function AgentConsole() {
       {/* Agent step strip */}
       <div className="relative flex items-center gap-3 overflow-hidden border-b border-border bg-surface/60 px-4 py-2.5">
         <MateAvatar size={24} busy />
-        <div className="flex items-center gap-x-3 overflow-hidden">
+        <div className="flex min-w-0 items-center gap-x-3 overflow-hidden">
           {STEPS.map((step, i) => (
             <span key={step} className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[10px] text-muted">
               <span
